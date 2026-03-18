@@ -80,6 +80,14 @@ loki.process "journal" {
     expression = "^\\\\s*$"
   }
 
+  // Extract log level from Home Assistant log format:
+  // "2026-03-18 18:28:42.977 INFO (MainThread) [component] message"
+  // Overrides the journal priority-based level label when matched.
+  stage.regex {
+    expression = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[.0-9]* (?P<level>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|FATAL) "
+    labels_from_groups = true
+  }
+
   forward_to = [loki.write.loki.receiver]
 }
 
