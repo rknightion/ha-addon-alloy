@@ -68,10 +68,6 @@ loki.relabel "journal" {
     source_labels = ["__journal_container_name"]
     target_label  = "container_name"
   }
-  rule {
-    source_labels = ["__journal_priority_keyword"]
-    target_label  = "level"
-  }
 }
 
 // --- Process journal logs ---
@@ -81,11 +77,15 @@ loki.process "journal" {
   }
 
   // Extract log level from Home Assistant log format:
-  // "2026-03-18 18:28:42.977 INFO (MainThread) [component] message"
-  // Overrides the journal priority-based level label when matched.
+  // "2026-03-18 19:02:30.204 INFO (MainThread) [component] message"
   stage.regex {
-    expression = "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[.0-9]* (?P<level>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|FATAL) "
-    labels_from_groups = true
+    expression = "[0-9]{2}:[0-9]{2}:[0-9]{2}[.0-9]* (?P<extracted_level>DEBUG|INFO|NOTICE|WARNING|WARN|ERROR|CRITICAL|FATAL) "
+  }
+
+  stage.labels {
+    values = {
+      level = "extracted_level",
+    }
   }
 
   forward_to = [loki.write.loki.receiver]
