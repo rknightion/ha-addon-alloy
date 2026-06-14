@@ -16,7 +16,6 @@ startup: services
 boot: auto
 journald: true
 host_network: true
-host_pid: true
 map:
   - addon_config:rw
   - share
