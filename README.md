@@ -1,6 +1,6 @@
 # Home Assistant App: Grafana Alloy
 
-Ship Home Assistant OS logs to [Grafana Loki](https://grafana.com/oss/loki/) using [Grafana Alloy](https://grafana.com/docs/alloy/latest/) — the modern replacement for the deprecated Promtail add-on.
+Ship Home Assistant OS logs to [Grafana Loki](https://grafana.com/oss/loki/) **and host system metrics to Prometheus** using [Grafana Alloy](https://grafana.com/docs/alloy/latest/) — the modern replacement for the deprecated Promtail add-on, plus node_exporter-style host monitoring.
 
 ## Why?
 
@@ -18,12 +18,23 @@ Grafana Alloy is the official successor to Promtail, Grafana Agent, and Grafana 
 
 ## Configuration
 
-Set `loki_url` to your Loki push endpoint:
+Set `loki_url` to your Loki push endpoint, and/or `prometheus_url` to a Prometheus `remote_write` endpoint:
 
 ```yaml
 loki_url: "http://192.168.1.45:3100/loki/api/v1/push"
+prometheus_url: "http://192.168.1.45:9090/api/v1/write"
+instance_name: home-assistant
 log_level: info
 ```
+
+At least one of `loki_url` (logs) or `prometheus_url` (metrics) must be set. See the add-on's **Documentation** tab for the full metrics options and the host-filesystem caveat.
+
+## Host metrics
+
+When `prometheus_url` is set, the add-on collects host CPU, memory, disk I/O, load average, and
+network metrics via Alloy's `unix` exporter. HAOS add-ons cannot mount the host root filesystem,
+so filesystem usage is reported for the mapped HA volumes (`share`/`media`/`backup`, which sit on
+the data partition) rather than every host mount.
 
 ## What gets shipped
 
