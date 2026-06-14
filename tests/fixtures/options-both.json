@@ -1,0 +1,9 @@
+{
+  "loki_url": "http://loki:3100/loki/api/v1/push",
+  "prometheus_url": "http://prom:9090/api/v1/write",
+  "prometheus_username": "12345",
+  "prometheus_password": "secret-token",
+  "instance_name": "hass-test",
+  "metrics_scrape_interval": "30s",
+  "log_level": "info"
+}

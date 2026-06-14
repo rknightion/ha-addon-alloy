@@ -1,4 +1,7 @@
 #!/usr/bin/with-contenv bash
+# The generated config references sys.env("PROMETHEUS_PASSWORD"); export it here
+# (init-alloy/run's env does not propagate to this long-running service).
+export PROMETHEUS_PASSWORD=$(jq -r '.prometheus_password // ""' /data/options.json)
 exec /usr/bin/alloy run \
     --server.http.listen-addr=0.0.0.0:12345 \
     --storage.path=/data/alloy \
