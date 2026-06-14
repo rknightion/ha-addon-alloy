@@ -1,10 +1,10 @@
 name: Grafana Alloy
-version: "1.1.0"
+version: "1.2.0"
 slug: alloy
 description: >-
-  Ship Home Assistant logs to Loki using Grafana Alloy.
-  Replacement for the deprecated Promtail add-on.
-  Reads systemd journal and forwards to a remote Loki instance.
+  Ship Home Assistant OS logs to Loki and host system metrics to Prometheus
+  using Grafana Alloy. Replacement for the deprecated Promtail add-on, plus
+  node_exporter-style host monitoring (CPU, memory, disk, network).
 url: https://github.com/ecohash-co/ha-addon-alloy
 codeowners:
   - "@ecohash-co"
@@ -15,8 +15,13 @@ init: false
 startup: services
 boot: auto
 journald: true
+host_network: true
+host_pid: true
 map:
   - addon_config:rw
+  - share
+  - media
+  - backup
 ports:
   12345/tcp: 12345
 ports_description:
@@ -24,9 +29,19 @@ ports_description:
 watchdog: "http://[HOST]:[PORT:12345]/-/ready"
 options:
   loki_url: "http://localhost:3100/loki/api/v1/push"
+  prometheus_url: ""
+  prometheus_username: ""
+  prometheus_password: ""
+  instance_name: homeassistant
+  metrics_scrape_interval: 60s
   log_level: info
 schema:
-  loki_url: url
+  loki_url: "url?"
+  prometheus_url: "url?"
+  prometheus_username: "str?"
+  prometheus_password: "password?"
+  instance_name: "str?"
+  metrics_scrape_interval: "str?"
   log_level: "list(debug|info|warn|error)"
   additional_config: "str?"
 stage: experimental
