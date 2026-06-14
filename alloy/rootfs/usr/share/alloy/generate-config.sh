@@ -93,6 +93,67 @@ loki.write "loki" {
 ALLOYCONFIG
 fi
 
+if [ -n "${PROMETHEUS_URL}" ]; then
+cat <<ALLOYCONFIG
+
+// --- Host metrics (node_exporter equivalent) ---
+// CPU/mem/diskstats are host-wide (not namespaced); host_network gives real NIC
+// stats; the filesystem collector reports mapped HA volumes (data partition).
+// The container overlay rootfs is excluded by the default fs_types_exclude.
+prometheus.exporter.unix "host" {
+  // procfs_path/sysfs_path stay at defaults: the non-namespaced files already
+  // carry host-wide values, and host_network fixes the net-namespaced ones.
+  disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs", "nfs", "nfsd", "mdadm"]
+
+  filesystem {
+    // Drop pseudo/virtual filesystems and the container's own plumbing.
+    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)\$"
+    mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)(\$|/)"
+    mount_timeout        = "5s"
+  }
+
+  netdev {
+    device_exclude = "^(veth.*|docker.*|br-.*|lo|cali.*|hassio.*)\$"
+  }
+}
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "${INSTANCE_NAME}"
+  }
+}
+
+prometheus.scrape "host" {
+  targets         = discovery.relabel.host.output
+  forward_to      = [prometheus.remote_write.metrics.receiver]
+  scrape_interval = "${METRICS_SCRAPE_INTERVAL}"
+  job_name        = "integrations/node_exporter"
+}
+
+prometheus.remote_write "metrics" {
+  endpoint {
+    url = "${PROMETHEUS_URL}"
+ALLOYCONFIG
+
+  if [ -n "${PROMETHEUS_USERNAME}" ]; then
+cat <<ALLOYCONFIG
+
+    basic_auth {
+      username = "${PROMETHEUS_USERNAME}"
+      password = sys.env("PROMETHEUS_PASSWORD")
+    }
+ALLOYCONFIG
+  fi
+
+cat <<ALLOYCONFIG
+  }
+}
+ALLOYCONFIG
+fi
+
 if [ -n "${ADDITIONAL_CONFIG}" ] && [ "${ADDITIONAL_CONFIG}" != "null" ]; then
   printf '\n// --- Additional user config ---\n%s\n' "${ADDITIONAL_CONFIG}"
 fi

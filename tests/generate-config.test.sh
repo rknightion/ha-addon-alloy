@@ -54,6 +54,33 @@ check_contains "$OUT" 'url = "http://loki:3100/loki/api/v1/push"'
 check_absent   "$OUT" 'prometheus.exporter.unix'
 validate_alloy "$OUT" "logs-only"
 
+echo "== metrics-only (with basic auth) =="
+OUT="$(export LOG_LEVEL=info PROMETHEUS_URL=http://prom:9090/api/v1/write PROMETHEUS_USERNAME=12345 INSTANCE_NAME=hass-test METRICS_SCRAPE_INTERVAL=30s; gen)"
+check_contains "$OUT" 'prometheus.exporter.unix "host"'
+check_contains "$OUT" 'discovery.relabel "host"'
+check_contains "$OUT" 'target_label = "instance"'
+check_contains "$OUT" 'replacement  = "hass-test"'
+check_contains "$OUT" 'prometheus.scrape "host"'
+check_contains "$OUT" 'targets         = discovery.relabel.host.output'
+check_contains "$OUT" 'scrape_interval = "30s"'
+check_contains "$OUT" 'prometheus.remote_write "metrics"'
+check_contains "$OUT" 'url = "http://prom:9090/api/v1/write"'
+check_contains "$OUT" 'basic_auth {'
+check_contains "$OUT" 'username = "12345"'
+check_contains "$OUT" 'password = sys.env("PROMETHEUS_PASSWORD")'
+check_absent   "$OUT" 'loki.source.journal'
+validate_alloy "$OUT" "metrics-only"
+
+echo "== both, no auth =="
+OUT="$(export LOG_LEVEL=warn JOURNAL_PATH=/run/log/journal LOKI_URL=http://loki:3100/loki/api/v1/push PROMETHEUS_URL=http://prom:9090/api/v1/write; gen)"
+check_contains "$OUT" 'loki.source.journal "journal"'
+check_contains "$OUT" 'prometheus.exporter.unix "host"'
+check_contains "$OUT" 'prometheus.remote_write "metrics"'
+check_contains "$OUT" 'replacement  = "homeassistant"'
+check_contains "$OUT" 'scrape_interval = "60s"'
+check_absent   "$OUT" 'basic_auth {'
+validate_alloy "$OUT" "both-noauth"
+
 echo ""
 echo "== RESULTS: $((TESTS-FAILS))/$TESTS checks passed =="
 [ "$FAILS" -eq 0 ] || { echo "FAILED ($FAILS)"; exit 1; }
