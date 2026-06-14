@@ -43,6 +43,14 @@ validate_alloy() {
   rm -rf "$tmp"
 }
 
+echo "== generator shebang (must NOT be with-contenv: it resets env, wiping exported options) =="
+TESTS=$((TESTS+1))
+if head -1 "$GEN" | grep -q 'with-contenv'; then
+  fail "generator uses with-contenv shebang — would wipe exported LOKI_URL/PROMETHEUS_URL"
+else
+  pass "generator shebang is env-preserving: $(head -1 "$GEN")"
+fi
+
 echo "== logs-only =="
 OUT="$(export LOG_LEVEL=info JOURNAL_PATH=/var/log/journal LOKI_URL=http://loki:3100/loki/api/v1/push; gen)"
 check_contains "$OUT" 'logging {'

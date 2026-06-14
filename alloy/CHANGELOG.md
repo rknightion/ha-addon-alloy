@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 - 2026-06-14
+
+### Fixed
+- Config generator ran under `with-contenv`, which reset the environment and wiped the
+  exported `loki_url`/`prometheus_url` options, producing an empty Alloy config (no logs
+  or metrics). The generator now runs under plain bash and inherits the exported options.
+
 ## 1.2.0 - 2026-06-14
 
 ### Added

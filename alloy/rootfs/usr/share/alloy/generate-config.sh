@@ -1,5 +1,8 @@
-#!/usr/bin/with-contenv bash
+#!/usr/bin/env bash
 # Generates the Alloy config from environment variables and writes it to stdout.
+# NOTE: plain bash (NOT with-contenv) — this is invoked by init-alloy/run, which
+# already has the container env and exports the options as env vars. with-contenv
+# would reset the environment and wipe those exported values.
 # Inputs (env): LOG_LEVEL, JOURNAL_PATH, LOKI_URL, PROMETHEUS_URL, PROMETHEUS_USERNAME,
 #   INSTANCE_NAME, METRICS_SCRAPE_INTERVAL, ADDITIONAL_CONFIG.
 # The Prometheus password is NOT interpolated here; the config references

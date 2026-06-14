@@ -38,7 +38,9 @@ echo " Instance: ${INSTANCE_NAME}"
 echo " Log level: ${LOG_LEVEL}"
 echo "-----------------------------------------------------------"
 
-# Generate Alloy config
-"${GENERATOR}" > "${CONFIG_FILE}"
+# Generate Alloy config.
+# Invoke via `bash` (not the shebang) so the exported options above are inherited;
+# the generator must NOT run under with-contenv, which would reset the environment.
+bash "${GENERATOR}" > "${CONFIG_FILE}"
 
 echo "Alloy config generated at ${CONFIG_FILE}"
